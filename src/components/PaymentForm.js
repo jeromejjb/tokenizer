@@ -1,4 +1,3 @@
-// src/components/PaymentForm.js
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -6,21 +5,29 @@ const PaymentForm = ({ closeForm }) => {
   const [amount, setAmount] = useState(1);
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handlePayment = async () => {
     setLoading(true);
+    setError(null);
 
     try {
-      // Here we would call the backend API to create a payment session
-      const { data } = await axios.post('/api/payments/buy-tokens', {
-        userId: 'user_id_here', // Replace with actual user ID from your auth system
-        amount,
+      const userId = 'user_id_here'; // Replace with actual user ID from your auth system
+
+      const { data } = await axios.post('https://tokenizer-five.vercel.app/api/payments/buy-tokens', {
+        userId: userId,
+        amount: amount,
       });
 
-      // Normally, we would redirect to Stripe's payment page. For now, just show a URL.
-      setPaymentUrl(data.paymentUrl);
+      // If the backend returns a payment URL, display it
+      if (data.paymentUrl) {
+        setPaymentUrl(data.paymentUrl);
+      } else {
+        setError('Unable to create payment link. Please try again.');
+      }
     } catch (error) {
       console.error('Payment error', error);
+      setError('Payment failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -57,6 +64,8 @@ const PaymentForm = ({ closeForm }) => {
             </a>
           </div>
         )}
+
+        {error && <div className="mt-4 text-center text-red-600">{error}</div>}
 
         <div className="mt-4 text-center">
           <button

@@ -1,32 +1,36 @@
+// src/components/HomePage.js
 import React, { useState } from 'react';
-import axios from 'axios';
 import PaymentForm from './PaymentForm';
 
 const HomePage = () => {
-  const [tokenBalance, setTokenBalance] = useState(100); // Static balance for MVP
+  const [tokenBalance, setTokenBalance] = useState(100); // Static token balance for MVP
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [paymentLink, setPaymentLink] = useState(''); // Store generated payment link
+  const [paymentLink, setPaymentLink] = useState(null);
 
   const handleCreateLink = async () => {
     try {
-      // Simulate token purchase amount
-      const amount = 5; // Let's assume user wants to buy 5 tokens
+      const userId = 'user_id_here'; // Replace with actual user ID logic
+      const amount = 1; // Example: User wants to buy 1 token
 
-      // Make API call to backend to create payment link
-      const { data } = await axios.post('https://tokenizer-five.vercel.app/api/payments/create-payment-link', {
-        userId: 'user_id_here', // Replace with actual user ID from your auth system
-        amount,
+      // Send POST request to backend to create Stripe checkout session
+      const response = await fetch('/api/payments/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, amount }),
       });
 
-      // If backend returns a payment URL, set it in the state
-      if (data.paymentUrl) {
-        setPaymentLink(data.paymentUrl);
+      const data = await response.json();
+
+      if (data.url) {
+        setPaymentLink(data.url); // Store the payment URL
+        alert('Payment link created! Share it with others to buy tokens.');
       } else {
-        alert('Failed to create payment link');
+        alert('Error creating payment link.');
       }
     } catch (error) {
       console.error('Error creating payment link:', error);
-      alert('Error creating payment link');
     }
   };
 
@@ -50,20 +54,11 @@ const HomePage = () => {
       </div>
 
       {paymentLink && (
-        <div className="mt-6 text-center">
-          <p className="text-xl text-gray-700">Payment link generated! Share it with others to buy tokens.</p>
-          <input
-            type="text"
-            value={paymentLink}
-            readOnly
-            className="mt-2 p-2 border border-gray-300 rounded-md w-80"
-          />
-          <button
-            onClick={() => navigator.clipboard.writeText(paymentLink)}
-            className="bg-blue-600 text-white px-4 py-2 mt-2 rounded-lg hover:bg-blue-700"
-          >
-            Copy Link
-          </button>
+        <div className="mt-6">
+          <p className="text-lg">Share this link to allow others to buy tokens:</p>
+          <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="text-blue-600">
+            {paymentLink}
+          </a>
         </div>
       )}
 
